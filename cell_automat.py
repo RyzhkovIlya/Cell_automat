@@ -88,7 +88,7 @@ class Cell_automatat():
     
     def count_score(self, sample_data:pd.DataFrame)->float:
         """
-
+        Function counts score
 
         Args:
             sample_data (pd.DataFrame): Dataframe for counting score
