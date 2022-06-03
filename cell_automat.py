@@ -122,29 +122,23 @@ class Corr_automatat():
         Returns:
             pd.DataFrame: Return Major Dataframe
         """
-        if self.num_layers > min(self.data.shape[0]//2, self.data.shape[1]//2):
-            print("Too many layers of counting")
-            return
-        
-        if self.name_item != None and self.name_user != None and self.data.loc[self.name_user, self.name_item] != 0.0:
-            print(f"Your item {self.name_item} is already rated by user {self.name_user}")
-            return
-        
         methods = ["moore", "neumann"]
-        if self.method not in methods:
-            print(f"Not found method {self.method}, try one of the available - {methods}")
-            return
         
-        if self.number_items != None and self.number_items > self.data.shape[1]:
-            print("Parameter 'number_items' is so large")
-            return
-
-        if self.number_users != None and self.number_users > self.data.shape[0]:
-            print("Parameter 'number_users' is so large")
-            return
-        
-        if self.threshold >= 1.0 or self.threshold <= 0:
-            print("Parameter 'threshold' is error. Must be (0, 1)")
+        condition = [self.num_layers > min(self.data.shape[0]//2, self.data.shape[1]//2), 
+                    self.name_item != None and self.name_user != None and self.data.loc[self.name_user, self.name_item] != 0.0, 
+                    self.method not in methods,
+                    self.number_items != None and self.number_items > self.data.shape[1], 
+                    self.number_users != None and self.number_users > self.data.shape[0],
+                    self.threshold >= 1.0 or self.threshold <= 0.0]
+        label = ["Too many layers of counting", 
+                f"Your item {self.name_item} is already rated by user {self.name_user}", 
+                f"Not found method {self.method}, try one of the available - {methods}", 
+                "Parameter 'number_items' is so large",
+                "Parameter 'number_users' is so large", 
+                "Parameter 'threshold' is error. Must be (0, 1)"]
+        output = np.select(condition, label)
+        if output != "0":
+            print(output)
             return
         
         if self.name_item != None and self.name_user != None:
