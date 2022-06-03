@@ -1,5 +1,6 @@
 class Corr_automatat():
     import pandas as pd
+    import numpy as np
     def __init__(self, data:pd.DataFrame, 
                 name_item = None, 
                 name_user = None,
