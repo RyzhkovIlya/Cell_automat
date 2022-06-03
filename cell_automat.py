@@ -1,4 +1,4 @@
-class Cell_automatat():
+class Corr_automatat():
     import pandas as pd
     def __init__(self, data:pd.DataFrame, 
                 name_item = None, 
@@ -89,9 +89,9 @@ class Cell_automatat():
     def count_score(self, sample_data:pd.DataFrame)->float:
         """
         Function counts score
-
+        
         Args:
-            sample_data (pd.DataFrame): Dataframe for counting score
+            sample_data (pd.DataFrame): Dataframe for counts score
 
         Returns:
             float: Estimate score
@@ -135,25 +135,25 @@ class Cell_automatat():
             print(f"Not found method {self.method}, try one of the available - {methods}")
             return
         
-        if self.number_items > self.data.shape[1]:
-            print("Parametr 'number_items' is so large")
+        if self.number_items != None and self.number_items > self.data.shape[1]:
+            print("Parameter 'number_items' is so large")
             return
 
-        if self.number_users > self.data.shape[0]:
-            print("Parametr 'number_users' is so large")
+        if self.number_users != None and self.number_users > self.data.shape[0]:
+            print("Parameter 'number_users' is so large")
             return
         
-        if self.threshold >= 1.0 and self.threshold <= 0:
+        if self.threshold >= 1.0 or self.threshold <= 0:
             print("Parameter 'threshold' is error. Must be (0, 1)")
             return
-
+        
         if self.name_item != None and self.name_user != None:
             all_data = self.create_user_corr(name_user = self.name_user)
             indexes = self.create_item_corr(data = all_data, 
                                             name_item = self.name_item)
             new_data, data = self.move_col_row(data = all_data[indexes], 
-                                                name_item = self.name_item, 
-                                                name_user = self.name_user)        
+                                            name_item = self.name_item, 
+                                            name_user = self.name_user)        
             sample_data = new_data.iloc[:self.num_layers*2+1, :self.num_layers*2+1]
             
             main_score = self.count_score(sample_data = sample_data)
@@ -174,8 +174,8 @@ class Cell_automatat():
                 indexes = self.create_item_corr(data = all_data, 
                                                 name_item = item)
                 new_data, data = self.move_col_row(data = all_data[indexes], 
-                                                    name_item = item, 
-                                                    name_user = self.name_user)        
+                                                name_item = item, 
+                                                name_user = self.name_user)        
                 sample_data = new_data.iloc[:self.num_layers*2+1, :self.num_layers*2+1]
                 main_score = self.count_score(sample_data = sample_data)
                 if main_score > self.threshold:
@@ -193,8 +193,8 @@ class Cell_automatat():
                 indexes = self.create_item_corr(data = all_data, 
                                                 name_item = self.name_item)
                 new_data, data = self.move_col_row(data = all_data[indexes], 
-                                                    name_item = self.name_item, 
-                                                    name_user = user)        
+                                                name_item = self.name_item, 
+                                                name_user = user)        
                 sample_data = new_data.iloc[:self.num_layers*2+1, :self.num_layers*2+1]
                 main_score = self.count_score(sample_data = sample_data)
                 if main_score > self.threshold:
