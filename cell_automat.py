@@ -135,6 +135,18 @@ class Cell_automatat():
             print(f"Not found method {self.method}, try one of the available - {methods}")
             return
         
+        if self.number_items > self.data.shape[1]:
+            print("Parametr 'number_items' is so large")
+            return
+
+        if self.number_users > self.data.shape[0]:
+            print("Parametr 'number_users' is so large")
+            return
+        
+        if self.threshold >= 1.0 and self.threshold <= 0:
+            print("Parameter 'threshold' is error. Must be (0, 1)")
+            return
+
         if self.name_item != None and self.name_user != None:
             all_data = self.create_user_corr(name_user = self.name_user)
             indexes = self.create_item_corr(data = all_data, 
