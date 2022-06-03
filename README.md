@@ -26,6 +26,7 @@ Stages of the class:
 - calculate the number of units that surround our cell
 - compare the proportion of units with a given threshold
 - if the value is greater than the threshold, then we can say that it is possible to recommend this product to the user; if it is less than the threshold, it is impossible.
-- 
-As an example, I will give a dataset with movie ratings movie_cell.jpynb.
+
+As an example, I will give a dataset with movie ratings [movie_cell.jpynb](https://github.com/RyzhkovIlya/Cellular-automaton/blob/main/movie_cell.ipynb).
+
 But to use this class, I changed the ratings to "rated - not rated" and then applied the cellular automaton model.
