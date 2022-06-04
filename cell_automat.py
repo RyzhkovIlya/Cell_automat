@@ -125,18 +125,22 @@ class Corr_automatat():
         """
         methods = ["moore", "neumann"]
         
-        condition = [self.num_layers > min(self.data.shape[0]//2, self.data.shape[1]//2), 
+        condition = [self.num_layers > min(self.data.shape[0]//2, self.data.shape[1]//2) or self.num_layers <= 0, 
                     self.name_item != None and self.name_user != None and self.data.loc[self.name_user, self.name_item] != 0.0, 
                     self.method not in methods,
                     self.number_items != None and self.number_items > self.data.shape[1], 
                     self.number_users != None and self.number_users > self.data.shape[0],
-                    self.threshold >= 1.0 or self.threshold <= 0.0]
-        label = ["Too many layers of counting", 
+                    self.threshold >= 1.0 or self.threshold <= 0.0,
+                    self.number_items != None and self.number_items <= 0,
+                    self.number_users != None and self.number_users <= 0]
+        label = ["Too many layers of counting or num_layers <= 0", 
                 f"Your item {self.name_item} is already rated by user {self.name_user}", 
                 f"Not found method {self.method}, try one of the available - {methods}", 
                 "Parameter 'number_items' is so large",
                 "Parameter 'number_users' is so large", 
-                "Parameter 'threshold' is error. Must be (0, 1)"]
+                "Parameter 'threshold' is error. Must be (0, 1)",
+                "Parametrt number_items must be [1, data.shape[1]",
+                "Parametrt number_users must be [1, data.shape[0]"]
         output = np.select(condition, label)
         if output != "0":
             print(output)
