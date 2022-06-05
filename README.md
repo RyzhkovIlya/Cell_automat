@@ -1,6 +1,12 @@
 # Cellular automaton
 [Cellular automaton wikipedia](https://en.wikipedia.org/wiki/Cellular_automaton)
 
+[PyPI modeule](https://pypi.org/project/recsyscell/)
+
+For using:
+- `pip install recsyscell (windows)`
+- `import recsyscell (from recsyscell inport CellAutomatBinary, CellAutomatRegressioin)`
+
 `Moore neighborhood`
 
 ![](https://miro.medium.com/max/376/1*6awbm7DQUsF-m0t01HewWw.png)
