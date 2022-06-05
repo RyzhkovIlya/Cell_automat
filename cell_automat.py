@@ -115,35 +115,15 @@ class Corr_automatat():
             else:
                 return main_score
 
-        elif self.method == "neumann" and self.task == "binary":
-            one_count = 0
-            zero_count = -2
-            one_col = sample_data.iloc[:, self.num_layers].values.tolist().count(1)
-            zero_col = sample_data.iloc[:, self.num_layers].values.tolist().count(0)
-            one_row = sample_data.iloc[self.num_layers].values.tolist().count(1)
-            zero_row = sample_data.iloc[self.num_layers].values.tolist().count(0)
-            one_count += one_col+one_row
-            zero_count += zero_col+zero_row
-            main_score = one_count/(one_count+zero_count)
-            return main_score
-        elif self.method == "neumann" and self.task == "regression":
-            return self.count_score_regression_neumann(sample_data)
-    
-    def count_score_regression_neumann(self, sample_data:pd.DataFrame)->float:
-        """
-        Function counts score for task regression for method neumann
-        
-        Args:
-            sample_data (pd.DataFrame): Dataframe for counts score
-
-        Returns:
-            float: Estimate score
-        """
-        counts_col = sum(sample_data.iloc[:, self.num_layers].values.tolist())
-        counts_row = sum(sample_data.iloc[self.num_layers].values.tolist())
-        sum_counts = counts_col + counts_row
-        main_score = sum_counts/(self.num_layers*4)
-        return round(main_score, self.round)
+        elif self.method == "neumann":
+            sum_col = sum(sample_data.iloc[:, self.num_layers].values.tolist())
+            sum_row = sum(sample_data.iloc[self.num_layers].values.tolist())
+            sum_count = sum_col + sum_row
+            main_score = sum_count/(self.num_layers*4)
+            if self.task == "binary":
+                return main_score
+            else:
+                return round(main_score, self.round)
 
     def cellular_automatat(self)->pd.DataFrame:
         """
