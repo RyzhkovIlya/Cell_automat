@@ -8,17 +8,21 @@ class Corr_automatat():
                 number_users:int = None,
                 num_layers:int = 1, 
                 threshold:float = 0.5, 
-                method:str = "moore"):
+                method:str = "moore",
+                task:str = "binary",
+                round: int = 1):
         """
         Args:
             data (pd.DataFrame): Dataframe User-Item containing 0 and 1.
             name_item (optional): Item name(name film, goods, product, etc.). Defaults to None.
             name_user (optional): User name(First name, Second name, number name, etc.). Defaults to None.
             num_layers (int, optional): Number of counting environment layers. Defaults to 1.
-            threshold (float, optional): Threshold for final score. Defaults to 0.5.
+            threshold (float, optional): Threshold for final score. Only for task == "binary" Defaults to 0.5.
             method (str, optional): Method counting environment ["moore", "neumann"]. Defaults to "moore".
             number_items (int, optional): Count return items. Only for "number_item"==None. Defaults to 5.
             number_users (int, optional): Count return users. Only for "number item"==None. Defaults to 5.
+            task (str, optional): The problem we are solving ["binary", "regression". Default to "binary"
+            round (int, optional): Up to how many decimal places to round the score. Only for task == "regression". Default to 1]
         """
         self.data = data
         self.name_item = name_item
@@ -28,6 +32,8 @@ class Corr_automatat():
         self.method = method
         self.number_items = number_items
         self.number_users = number_users
+        self.task = task
+        self.round = round
         
     def create_user_corr(self, name_user)->pd.DataFrame:
         """
@@ -46,6 +52,7 @@ class Corr_automatat():
 
         all_df = self.data.join(corr_user)
         all_df.sort_values("Correlation", ascending=False, inplace=True)
+        all_df.drop("Correlation", axis=1, inplace=True)
         return all_df
 
     def create_item_corr(self, data:pd.DataFrame, name_item:str)->list:
@@ -63,6 +70,7 @@ class Corr_automatat():
         corr_item = pd.DataFrame(movies_like_item, columns=['Correlation'])
         corr_item.dropna(inplace=True)
         corr_item.sort_values('Correlation', ascending=False, inplace=True)
+        corr_item.drop("Correlation", axis=1, inplace=True)
         forrest_index = corr_item.index.tolist()
         return forrest_index
 
@@ -102,9 +110,12 @@ class Corr_automatat():
             sum_one = sum(sample_data.sum())
             all_elem = (self.num_layers*2+1)**2 -1
             main_score = sum_one/all_elem
-            return main_score
+            if self.task == "regression":
+                return round(main_score, self.round)
+            else:
+                return main_score
 
-        elif self.method == "neumann":
+        elif self.method == "neumann" and self.task == "binary":
             one_count = 0
             zero_count = -2
             one_col = sample_data.iloc[:, self.num_layers].values.tolist().count(1)
@@ -115,6 +126,24 @@ class Corr_automatat():
             zero_count += zero_col+zero_row
             main_score = one_count/(one_count+zero_count)
             return main_score
+        elif self.method == "neumann" and self.task == "regression":
+            return self.count_score_regression_neumann(sample_data)
+    
+    def count_score_regression_neumann(self, sample_data:pd.DataFrame)->float:
+        """
+        Function counts score for task regression for method neumann
+        
+        Args:
+            sample_data (pd.DataFrame): Dataframe for counts score
+
+        Returns:
+            float: Estimate score
+        """
+        counts_col = sum(sample_data.iloc[:, self.num_layers].values.tolist())
+        counts_row = sum(sample_data.iloc[self.num_layers].values.tolist())
+        sum_counts = counts_col + counts_row
+        main_score = sum_counts/(self.num_layers*4)
+        return round(main_score, self.round)
 
     def cellular_automatat(self)->pd.DataFrame:
         """
@@ -124,7 +153,7 @@ class Corr_automatat():
             pd.DataFrame: Return Major Dataframe
         """
         methods = ["moore", "neumann"]
-        
+        tasks = ["binary", "regression"]
         condition = [self.num_layers > min(self.data.shape[0]//2, self.data.shape[1]//2) or self.num_layers <= 0, 
                     self.name_item != None and self.name_user != None and self.data.loc[self.name_user, self.name_item] != 0.0, 
                     self.method not in methods,
@@ -132,7 +161,9 @@ class Corr_automatat():
                     self.number_users != None and self.number_users > self.data.shape[0],
                     self.threshold >= 1.0 or self.threshold <= 0.0,
                     self.number_items != None and self.number_items <= 0,
-                    self.number_users != None and self.number_users <= 0]
+                    self.number_users != None and self.number_users <= 0,
+                    self.task not in tasks,
+                    self.round < 0]
         label = ["Too many layers of counting or num_layers <= 0", 
                 f"Your item {self.name_item} is already rated by user {self.name_user}", 
                 f"Not found method {self.method}, try one of the available - {methods}", 
@@ -140,7 +171,9 @@ class Corr_automatat():
                 "Parameter 'number_users' is so large", 
                 "Parameter 'threshold' is error. Must be (0, 1)",
                 "Parametrt number_items must be [1, data.shape[1]",
-                "Parametrt number_users must be [1, data.shape[0]"]
+                "Parametrt number_users must be [1, data.shape[0]",
+                f"Not found method {self.task}, try one of the available - {tasks}",
+                "Parameter round must be >= 0"]
         output = np.select(condition, label)
         if output != "0":
             print(output)
@@ -156,19 +189,22 @@ class Corr_automatat():
             sample_data = new_data.iloc[:self.num_layers*2+1, :self.num_layers*2+1]
             
             main_score = self.count_score(sample_data = sample_data)
-            if main_score > self.threshold:
+            if main_score > self.threshold and self.task == "binary":
                 print(f"Item {self.name_item} approach for User {self.name_user}")
                 return data, self.name_item
-            else: 
+            elif main_score <= self.threshold and self.task == "binary":
                 print(f"Item {self.name_item} doesn't approach for User {self.name_user}")
                 return data, self.name_item
-            
+            elif self.task == "regression":
+                print(f"Predict user {self.name_user} score for item {self.name_item} = {main_score}")
+                return data, main_score
+
         if self.name_item == None and self.name_user != None:
-            if self.number_items == None:
+            if self.number_items == None and self.task == "binary":
                 print('Expected input parameter "number_items" or "name_item"')
                 return
             scores = {}
-            for item in self.data.loc[self.name_user, :][self.data.loc[self.name_user, :]==0].index:
+            for item in self.data.loc[self.name_user, :][self.data.loc[self.name_user, :]==0.0].index:
                 all_data = self.create_user_corr(name_user = self.name_user)
                 indexes = self.create_item_corr(data = all_data, 
                                                 name_item = item)
@@ -177,13 +213,18 @@ class Corr_automatat():
                                                 name_user = self.name_user)        
                 sample_data = new_data.iloc[:self.num_layers*2+1, :self.num_layers*2+1]
                 main_score = self.count_score(sample_data = sample_data)
-                if main_score > self.threshold:
+                if main_score > self.threshold and self.task == "binary" or self.task == "regression":
                     scores[item] = main_score
-            print(f"For User {self.name_user} approach follow {self.number_items} items: {sorted(scores, key=scores.get, )[::-1][:self.number_items]}")
-            return data, sorted(scores, key=scores.get, )[::-1][:self.number_items]
-        
+                
+            if self.task == "binary":
+                print(f"For User {self.name_user} approach follow {self.number_items} items: {sorted(scores, key=scores.get, )[::-1][:self.number_items]}")
+                return data, sorted(scores, key=scores.get, )[::-1][:self.number_items]
+            else:
+                print(f"Done. Prediction for user {self.name_user} to return dict item_name -> score")
+                return data, scores
+
         if self.name_item != None and self.name_user == None:
-            if self.name_user == None:
+            if self.number_users == None and self.task == "binary":
                 print('Expected input parameter "number_users" or "name_user"')
                 return
             scores = {}
@@ -196,7 +237,11 @@ class Corr_automatat():
                                                 name_user = user)        
                 sample_data = new_data.iloc[:self.num_layers*2+1, :self.num_layers*2+1]
                 main_score = self.count_score(sample_data = sample_data)
-                if main_score > self.threshold:
+                if main_score > self.threshold and self.task == "binary" or self.task == "regression":
                     scores[user] = main_score
-            print(f"For Item {self.name_item} approach follow {self.number_users} users: {sorted(scores, key=scores.get)[::-1][:self.number_users]}")
-            return data, sorted(scores, key=scores.get, )[::-1][:self.number_users]
+            if self.task == "binary":
+                print(f"For Item {self.name_item} approach follow {self.number_users} users: {sorted(scores, key=scores.get)[::-1][:self.number_users]}")
+                return data, sorted(scores, key=scores.get, )[::-1][:self.number_users]
+            else:
+                print(f"Done. Prediction for item {self.name_item} to return dict user_name -> score")
+                return data, scores
